@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MakeGood Power Chair Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F6F8; --panel:#FFFFFF; --ink:#1D2B3A; --muted:#5B6B7A; --line:#D5DEE5;
+  --accent:#F2B705; --accent-ink:#1D2B3A; --sel:#1D2B3A; --sel-ink:#FFFFFF;
+  --stop:#B83A28; --stop-bg:#FBE9E6; --caution:#8A5A00; --caution-bg:#FFF3D6;
+  --info:#1F6F8B; --info-bg:#E4F2F7; --ok:#1F7A6E;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141C24; --panel:#1C2631; --ink:#E6EDF3; --muted:#9AAAB8; --line:#2E3B48;
+    --accent:#F2B705; --accent-ink:#141C24; --sel:#F2B705; --sel-ink:#141C24;
+    --stop:#FF8A78; --stop-bg:#3A1F1B; --caution:#F5C451; --caution-bg:#352B14;
+    --info:#7FC8E0; --info-bg:#16303A; --ok:#6FD1BF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141C24; --panel:#1C2631; --ink:#E6EDF3; --muted:#9AAAB8; --line:#2E3B48;
+  --accent:#F2B705; --accent-ink:#141C24; --sel:#F2B705; --sel-ink:#141C24;
+  --stop:#FF8A78; --stop-bg:#3A1F1B; --caution:#F5C451; --caution-bg:#352B14;
+  --info:#7FC8E0; --info-bg:#16303A; --ok:#6FD1BF;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5}
+header{max-width:1200px;margin:0 auto;padding:28px 20px 8px}
+h1{font-size:1.9rem;line-height:1.15;margin:0 0 6px;font-weight:700}
+header p{margin:0;color:var(--muted);max-width:68ch}
+main{max-width:1200px;margin:0 auto;padding:16px 20px 48px;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:24px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+fieldset{border:0;margin:0 0 18px;padding:16px;background:var(--panel);
+  border-left:4px solid var(--line);border-radius:6px}
+fieldset.bad{border-left-color:var(--stop)}
+legend{font-weight:700;font-size:1.05rem;padding:0;margin-bottom:2px;float:left;width:100%}
+.help{clear:both;color:var(--muted);font-size:.92rem;margin:0 0 10px;max-width:70ch}
+.req{font-size:.8rem;color:var(--muted);font-weight:400;margin-left:6px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;width:1px;height:1px}
+.opt label{display:block;cursor:pointer;padding:8px 12px;border:1.5px solid var(--line);
+  border-radius:999px;font-size:.95rem;background:transparent;user-select:none}
+.opt input:checked+label{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
+.opt input:focus-visible+label{outline:3px solid var(--accent);outline-offset:2px}
+.opt label small{display:block;font-size:.78rem;opacity:.8}
+.multi .opt label{border-radius:6px}
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);
+  background:var(--panel);border-radius:6px;overflow:hidden;max-height:calc(100vh - 24px);
+  display:flex;flex-direction:column}
+@media (max-width:900px){aside{position:static;max-height:none}}
+.tag{background:var(--accent);color:var(--accent-ink);padding:14px 16px}
+.tag h2{margin:0;font-size:1.2rem}
+.tag p{margin:2px 0 0;font-size:.95rem}
+.sheet{padding:12px 16px 16px;overflow:auto}
+.sheet h3{font-size:1rem;margin:16px 0 6px}
+.warn{padding:8px 10px;border-radius:4px;margin:0 0 6px;font-size:.92rem}
+.warn b{margin-right:4px}
+.stop{background:var(--stop-bg);color:var(--stop)}
+.caution{background:var(--caution-bg);color:var(--caution)}
+.info{background:var(--info-bg);color:var(--info)}
+.warn span{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;vertical-align:top;padding:6px 4px;border-bottom:1px solid var(--line)}
+th{font-weight:700;color:var(--muted);font-size:.8rem}
+td.q{white-space:nowrap;text-align:right;width:3em}
+td.pr{white-space:nowrap;text-align:right}
+.total{margin:10px 0 0;font-size:.92rem}
+.opt.off label{opacity:.45;cursor:not-allowed;border-style:dashed}
+td .n{display:block;color:var(--muted);font-size:.8rem}
+tr.cat td{font-weight:700;padding-top:12px;border-bottom:0;color:var(--muted)}
+.tw{overflow-x:auto}
+ul.checks{margin:0;padding-left:1.2em;font-size:.9rem}
+ul.checks li{margin-bottom:4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button{font:inherit;font-size:.92rem;padding:8px 14px;border-radius:6px;cursor:pointer;
+  border:1.5px solid var(--ink);background:transparent;color:var(--ink)}
+button.primary{background:var(--ink);color:var(--panel)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+textarea{width:100%;min-height:140px;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;
+  background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:8px;display:none}
+.status{font-size:.85rem;color:var(--ok);margin-top:6px;min-height:1.2em}
+footer{max-width:1200px;margin:0 auto;padding:0 20px 32px;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>MakeGood Power Chair configurator</h1>
+  <p>Work through each decision before buying parts. The build sheet updates as you go, with a parts list, anything that blocks the build, and the checks this configuration needs. Choices are yours; the tool only flags consequences.</p>
+</header>
+<main>
+  <form id="f" onsubmit="return false"></form>
+  <aside aria-live="polite">
+    <div class="tag"><h2 id="sumTitle">Build sheet</h2><p id="sumLine"></p></div>
+    <div class="sheet">
+      <div id="warns"></div>
+      <h3>Parts</h3>
+      <div class="tw"><table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Cost</th></tr></thead><tbody id="bom"></tbody></table></div>
+      <p class="total" id="total"></p>
+      <h3>Verification for this build</h3>
+      <ul class="checks" id="checks"></ul>
+      <div class="actions">
+        <button class="primary" type="button" id="cpMd">Copy parts list</button>
+        <button type="button" id="cpJson">Copy config</button>
+        <button type="button" id="reset">Reset</button>
+      </div>
+      <div class="status" id="status"></div>
+      <textarea id="out" readonly aria-label="Export text"></textarea>
+    </div>
+  </aside>
+</main>
+<footer>Draft rules v0.4, tracks requirements doc v0.10. Prices as of September 2026 in USD: “listed” means seen in a US retail listing, “est.” is an estimate to verify. Parts are placeholders until bench-proven; verify ratings before purchase. Not evaluated by any regulatory body.</footer>
+
+<script>
+// ---------- Price book (USD per unit). src: "listed" = seen in a US retail listing Sept 2026; "est" = estimate, verify.
+const P = {
+ rp2350:[7,15,"est"], fuse:[10,25,"est"], mainsw:[10,30,"est"], sense:[1,3,"est"], battdisp:[5,20,"est"],
+ hubNew:[70,130,"listed"], hubSalv:[15,40,"est"], donated:[0,0,"donated"], hubDon:[0,0,"donated"], teardownTools:[0,20,"est"], axleBr:[10,30,"est"], therm:[1,3,"est"],
+ inspect:[30,80,"est"], vesc:[180,260,"est"], can:[2,8,"est"], odrive:[149,149,"listed"], odHeat:[12,12,"listed"],
+ zs:[15,30,"est"], hbBoard:[20,40,"est"], stlink:[10,25,"est"],
+ dcb203:[29,60,"listed"], dcb205:[59,129,"listed"], dwAdapt:[10,25,"est"], dwHarn:[5,15,"est"], dwChg:[30,70,"est"],
+ idealD:[10,25,"est"], dump:[10,30,"est"],
+ wcBrushed:[160,200,"listed"], wcBrushedSalv:[40,120,"est"], wcBldc:[250,450,"est"], wcBldcSalv:[60,150,"est"],
+ wcWheel:[40,90,"est"], encoder:[20,60,"est"],
+ roboclaw:[135,135,"listed"], sabertooth:[125,125,"listed"], wcCtrl:[150,600,"est"],
+ b24_6:[150,495,"listed"], b24_10:[270,700,"listed"], sla12:[30,60,"est"], chg24:[25,60,"est"], chgSla:[25,50,"est"],
+ seatSens:[5,20,"est"], restraint:[20,60,"est"], subframe:[50,150,"est"], buddy:[50,200,"est"],
+ hitch:[20,50,"est"], trailer:[80,200,"est"], board:[40,100,"est"],
+ lever:[30,100,"est"], interlock:[3,10,"est"], pod:[50,150,"est"], fricArm:[20,60,"est"], rimGuard:[10,30,"est"],
+ wlock:[15,40,"est"], sol:[15,40,"est"], idxDisc:[10,30,"est"], emBrake:[40,120,"est"], rotorAd:[15,40,"est"],
+ caliper:[25,60,"est"], springAct:[20,60,"est"], hitHold:[5,15,"est"], manRel:[10,30,"est"],
+ ventMount:[30,100,"est"], dcdc:[60,200,"est"], ventCable:null, ventFuse:[10,25,"est"],
+ joy:[20,150,"est"], adSwitch:[25,70,"est"], jack:[2,5,"est"], scanDisp:[10,30,"est"], snp:null, head:null,
+ ventuno:[299,299,"listed"], unoq:[45,70,"est"], otherAI:[100,400,"est"], cam:[25,60,"est"], tof:[10,25,"est"],
+ cliff:[10,25,"est"], imu:[5,15,"est"], pwrMon:[5,15,"est"], annunc:[5,20,"est"], ovr:[25,70,"est"], dcdc12:[15,40,"est"],
+ bleRemote:[20,60,"est"], rc:[40,120,"est"], tether:[10,25,"est"], keysw:[5,15,"est"], disp:[10,25,"est"]
+};
+
+const WC = s=>s.drive!=="hub36";
+const DECISIONS = [
+ {id:"mass",label:"Driver mass (max)",req:"PAS-1",help:"Sets frame, brake, and battery margins.",
+  opts:[["15","Up to 15 kg","roughly ages 1–3"],["25","Up to 25 kg","roughly ages 3–8"]],def:"25"},
+ {id:"passenger",label:"Friend riding along",req:"§8",help:"Seat, trailer, or board roughly doubles payload.",
+  opts:[["none","No passenger"],["trailer","Towed trailer"],["seat","Buddy seat"],["board","Standing board"],["play","Shared-play modes only"]],def:"none"},
+ {id:"dual",label:"Manual / power mechanism",req:"§9",help:"How the chair switches between self-propelled and powered.",
+  opts:[["lift","Lever-deployed drive wheels","lifts printed wheels"],["pod","Removable power pod"],["friction","Friction drive","drive wheel on printed tire"],["poweronly","Power only","no manual mode"]],def:"lift"},
+ {id:"drive",label:"Drive motors",req:"DRV-2",help:"Hoverboard hubs run a 36 V bus. Standard wheelchair motors run 24 V and usually include an electromagnetic parking brake.",
+  opts:[["hub36","Hoverboard-class hub","36 V brushless, no brake"],
+        ["wcbrushed","Wheelchair gearmotor","24 V brushed, EM brake, freewheel lever"],
+        ["wcbldc","Wheelchair brushless hub wheel","24 V, EM brake, manual release"]],def:"hub36"},
+ {id:"motorsrc",label:"Motor source",req:"DRV-2a",
+  opts:[["new","New"],["donated","Donated working hoverboard","one per chair",s=>s.drive==="hub36","Hoverboard motors only"],["salv","Salvaged","used hoverboard or power chair"],["mixed","Mixed"]],def:"new"},
+ {id:"wheel",label:"Drive wheel size",req:"DRV-3",
+  opts:[["6.5","6.5 in",null,s=>s.drive!=="wcbldc","Not offered for wheelchair hub wheels"],["8","8–8.5 in"],["10","10 in"]],def:"8"},
+ {id:"ctrl",label:"Motor controller",req:"ELE-2b",
+  opts:[["vesc","VESC dual","brushless, open firmware",s=>s.drive!=="wcbrushed","Brushless only"],
+        ["odrive","2× ODrive S1","brushless",s=>s.drive!=="wcbrushed","Brushless only"],
+        ["zs","2× ZS-X11H","bench only",s=>s.drive!=="wcbrushed","Brushless only"],
+        ["reflash","Reflashed hoverboard board",null,s=>s.drive==="hub36","Hoverboard motors only"],
+        ["roboclaw","RoboClaw 2x30A","brushed, 6–34 V",s=>s.drive==="wcbrushed","Brushed motors only"],
+        ["sabertooth","Sabertooth 2x32","brushed",s=>s.drive==="wcbrushed","Brushed motors only"],
+        ["wcctrl","Standard wheelchair controller","with joystick",s=>WC(s),"Wheelchair motors only"]],def:"vesc"},
+ {id:"batt",label:"Battery",req:"§6",help:"Options follow the motor voltage: DeWalt 20V MAX pairs for 36 V, 24 V packs for wheelchair motors.",
+  opts:[["2ah","2× DeWalt 2 Ah","36 V, 72 Wh",s=>!WC(s),"36 V bus only"],
+        ["5ah","2× DeWalt 5 Ah","36 V, 180 Wh",s=>!WC(s),"36 V bus only"],
+        ["hot","4× DeWalt 5 Ah hot-swap","36 V, 360 Wh",s=>!WC(s),"36 V bus only"],
+        ["b24_6","24 V Li-ion 6 Ah","144 Wh",s=>WC(s),"24 V bus only"],
+        ["b24_10","24 V Li-ion 10 Ah","240 Wh",s=>WC(s),"24 V bus only"],
+        ["b24hot","2× 24 V 6 Ah hot-swap","288 Wh",s=>WC(s),"24 V bus only"],
+        ["sla","2× 12 V SLA/AGM 12 Ah","heavy, cheap",s=>WC(s),"24 V bus only"]],def:"2ah"},
+ {id:"regen",label:"Regenerative braking",req:"SAF-10",opts:[["off","Off"],["on","On"]],def:"off"},
+ {id:"brake",label:"Parking brake",req:"SAF-1, SAF-2",multi:true,help:"Pick one or more. At least one must hold the chair with power off.",
+  opts:[["integ","Motor's built-in EM brake",null,s=>WC(s),"Wheelchair motors only"],
+        ["manual","Manual wheel locks"],["pin","Solenoid pin lock"],["em","Add-on spring-applied EM brake"],["cable","Cable disc, spring-applied"]],def:["manual"]},
+ {id:"aiplat",label:"Assistive driving computer",req:"4.7",help:"Optional. Assist can only warn, slow, or request a stop, and every intervention can be overridden. Tip and power monitoring run on the supervisor and need no assist computer.",
+  opts:[["none","None"],["ventuno","Arduino VENTUNO Q","vision, 40 TOPS NPU"],["unoq","Arduino UNO Q","lighter, verify capability"],["other","Other sponsor platform","meets ASD-7 interface"]],def:"none"},
+ {id:"assist",label:"Assist features",req:"ASD",multi:true,
+  opts:[["collide","Collision avoidance"],["drop","Drop-off / stair / curb edge"],["street","Street / vehicle awareness",null,s=>s.aiplat!=="none","Needs an assist computer"],["tip","Tip / slope monitoring"],["power","Power monitoring and range"]],def:["tip","power"]},
+ {id:"assistlvl",label:"Assist default level",req:"ASD-2",help:"Starting point for each feature; parents can change any feature per profile.",
+  opts:[["warn","Warn only"],["slow","Warn + slow"],["stop","Warn + slow + stop with override"]],def:"warn"},
+ {id:"vent",label:"Ventilator",req:"§7",opts:[["none","None"],["indep","On its own batteries","option A"],["fed","Fed from chair","option B"]],def:"none"},
+ {id:"input",label:"Driver input",req:"INP-2",multi:true,
+  opts:[["joy","Joystick"],["sw","Switches"],["scan","Single-switch scanning"],["snp","Sip-N-Puff"],["head","Head array"]],def:["joy"]},
+ {id:"sup",label:"Supervision",req:"4.6.2",multi:true,help:"Parents choose any combination.",
+  opts:[["deadman","Hold-to-run remote"],["estop","E-stop remote"],["takeover","Attendant takeover"],["tether","Tether kill cord"],["enable","Driver enable switch"],["timed","Timed sessions"],["prox","Proximity limit"],["indep","Independent"]],def:["estop","takeover"]},
+ {id:"link",label:"Attendant link",req:"ATT-4",opts:[["ble","Bluetooth LE"],["rc","2.4 GHz RC with failsafe"],["none","None"]],def:"ble"},
+ {id:"cfgui",label:"Parent settings interface",req:"CFG-3",opts:[["key","On-chair key + display"],["app","Phone app"],["both","Both"]],def:"both"}
+];
+
+const KEY="mgpc-config-v3";
+const avail=(o,s)=>!o[3]||o[3](s);
+function defaults(){const s={};DECISIONS.forEach(d=>s[d.id]=Array.isArray(d.def)?[...d.def]:d.def);return s}
+function normalize(s){
+  DECISIONS.forEach(d=>{
+    if(d.multi){s[d.id]=s[d.id].filter(v=>{const o=d.opts.find(x=>x[0]===v);return o&&avail(o,s)})}
+    else{const o=d.opts.find(x=>x[0]===s[d.id]); if(!o||!avail(o,s)){const f=d.opts.find(x=>avail(x,s)); s[d.id]=f?f[0]:null}}
+  });
+  return s;
+}
+let state;
+try{const raw=localStorage.getItem(KEY); state=normalize(raw?Object.assign(defaults(),JSON.parse(raw)):defaults())}catch(e){state=normalize(defaults())}
+
+const f=document.getElementById("f");
+function renderForm(){
+  const act=document.activeElement&&document.activeElement.id;
+  f.innerHTML="";
+  DECISIONS.forEach(d=>{
+    const fs=document.createElement("fieldset"); fs.id="fs-"+d.id; if(d.multi) fs.className="multi";
+    fs.innerHTML=`<legend>${d.label}<span class="req">${d.req}</span></legend><p class="help">${d.help||""}</p>`;
+    const o=document.createElement("div"); o.className="opts";
+    d.opts.forEach(opt=>{
+      const [v,l,sm]=opt, ok=avail(opt,state), id=`${d.id}-${v}`, type=d.multi?"checkbox":"radio";
+      const checked=d.multi?state[d.id].includes(v):state[d.id]===v;
+      const w=document.createElement("div"); w.className="opt"+(ok?"":" off");
+      w.innerHTML=`<input type="${type}" name="${d.id}" id="${id}" value="${v}" ${checked?"checked":""} ${ok?"":"disabled"}><label for="${id}" ${ok?"":`title="${opt[4]||"Not available with current choices"}"`}>${l}${sm?`<small>${sm}</small>`:""}${ok?"":`<small>${opt[4]||"Not available"}</small>`}</label>`;
+      o.appendChild(w);
+    });
+    fs.appendChild(o); f.appendChild(fs);
+  });
+  if(act){const el=document.getElementById(act); if(el&&!el.disabled) el.focus()}
+}
+f.addEventListener("change",e=>{
+  const d=DECISIONS.find(x=>x.id===e.target.name); if(!d) return;
+  if(d.multi){state[d.id]=[...f.querySelectorAll(`input[name="${d.id}"]:checked`)].map(i=>i.value)}
+  else state[d.id]=e.target.value;
+  if(d.id==="drive"){ // sensible brake default when switching motor family
+    if(WC(state)&&!state.brake.includes("integ")) state.brake=["integ",...state.brake];
+  }
+  normalize(state);
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(err){}
+  renderForm(); compute();
+});
+
+const money=n=>"$"+Math.round(n).toLocaleString("en-US");
+function compute(){
+  const s=state, bom=[], W=[], C=[], bad=new Set();
+  const add=(cat,item,qty,note,pk)=>{const ex=bom.find(b=>b.item===item); if(ex){ex.qty+=qty}else bom.push({cat,item,qty,note,pk})};
+  const warn=(lvl,txt,fs)=>{W.push({lvl,txt}); if(lvl==="stop"&&fs) bad.add(fs)};
+  const has=(k,v)=>s[k].includes(v);
+  const remote=["deadman","estop","takeover","timed","prox"].some(v=>has("sup",v));
+  const pax=["trailer","seat","board"].includes(s.passenger);
+  const wc=WC(s), bus=wc?24:36, salv=s.motorsrc==="salv"||s.motorsrc==="mixed";
+
+  // Always
+  add("Control","RP2350 supervisor board",1,s.link==="ble"||s.cfgui!=="key"?"radio-equipped, e.g. Pico 2 W class":"","rp2350");
+  add("Power","Main fuse or DC breaker, bus-rated",1,"","fuse");
+  add("Power","Main power switch, child-inaccessible",1,"SAF-3","mainsw");
+  add("Power","Battery state display",1,"BAT-9","battdisp");
+
+  // Drive
+  if(s.drive==="hub36"){
+    if(s.motorsrc==="donated"){
+      add("Drive","Donated working hoverboard",1,"source of a matched motor pair; controller still replaced","donated");
+      add("Drive",`Hub motors from donated hoverboard, ${s.wheel} in, 36 V`,2,"wheel size set by the donated unit","hubDon");
+      add("Tools","Teardown tools (driver bits, wire cutters, heat shrink)",1,"skip if owned","teardownTools");
+      C.push("Before teardown: power up the donated hoverboard and confirm both wheels drive smoothly in both directions, with no grinding or hall faults. Record make, model, and any UL 2272 label.");
+      C.push("After teardown: incoming inspection per DRV-2a/DRV-2d (bearings, all 6 hall states, phase resistance, insulation, tire, axle).");
+      warn("caution","Donated hoverboard battery: not reused in the chair by default. Its age and cell quality are unknown. If considered, require a UL 2272 label, capacity test, and BMS check; otherwise send it to battery recycling (DRV-2d).");
+      if(s.ctrl==="reflash") warn("info","The donated unit's own mainboard can be the reflash target. Confirm the MCU variant first.");
+    } else add("Drive",`Hoverboard-class hub motor, ${s.wheel} in, 36 V, hall-sensored`,2,salv?"salvaged or new":"new",s.motorsrc==="salv"?"hubSalv":"hubNew");
+    add("Drive","Metal axle clamp brackets",2,"MEC-2","axleBr");
+  }
+  if(s.drive==="wcbrushed"){
+    add("Drive","Wheelchair gearmotor, 24 V brushed, integrated EM brake + freewheel",2,"e.g. 250 W class, 17 mm keyed shaft",s.motorsrc==="salv"?"wcBrushedSalv":"wcBrushed");
+    add("Drive",`Drive wheel with keyed hub, ${s.wheel} in`,2,"","wcWheel");
+    add("Drive","Motor mounting brackets",2,"","axleBr");
+    warn("caution","Wheelchair gearmotors weigh about 3 kg each or more. Recheck CG, tip stability, and lift-lever force for a toddler chair.");
+    if(s.ctrl!=="wcctrl"){add("Control","Wheel/shaft encoder for closed-loop speed",2,"ELE-2","encoder");
+      warn("info","Some vendors offer an encoder only in place of the brake. Confirm a model with both, or fit an external encoder.");}
+  }
+  if(s.drive==="wcbldc"){
+    add("Drive",`Wheelchair brushless hub wheel, ${s.wheel} in, 24 V, EM brake (L + R)`,2,"e.g. 180 W class, ~7 kg each",s.motorsrc==="salv"?"wcBldcSalv":"wcBldc");
+    add("Drive","Axle mounting brackets",2,"","axleBr");
+    warn("caution","Wheelchair hub wheels can weigh around 7 kg each. That is heavy for a toddler chair; recheck CG and lever force.");
+    if(s.ctrl==="vesc"||s.ctrl==="odrive") warn("info","Confirm hall sensor and brake coil wiring; brake needs its own driver output.");
+  }
+  add("Drive","Motor temperature sensor",2,"SAF-9","therm");
+  if(salv){add("Tools","Incoming inspection: hall/encoder tester, milliohm meter, insulation check",1,"DRV-2a","inspect");
+    C.push("Inspect each salvaged motor per DRV-2a before assembly"+(wc?", including brake engage/release and freewheel lever.":"."));}
+  if(s.motorsrc==="mixed") warn("caution","Match left and right motor models on each chair (DRV-2c).");
+  if(s.wheel==="6.5") warn("info","6.5 in wheels handle thresholds poorly. Confirm DRV-5 threshold height.");
+
+  // Controller
+  if(s.ctrl==="vesc"){add("Control","Dual VESC controller, vetted unit, hall FOC",1,`verify rating at ${bus} V`,"vesc");
+    add("Control","CAN transceiver, 3.3 V",1,"","can");
+    warn("caution","VESC clones vary widely. Specify a vetted source and bench-test each unit.");}
+  if(s.ctrl==="odrive"){add("Control","ODrive S1",2,"12–50.5 V, brake resistor included","odrive");
+    add("Control","ODrive S1 heat spreader plate",2,"","odHeat");
+    add("Control","CAN transceiver, 3.3 V",1,"","can");
+    if(!wc) warn("caution","ODrive S1 bus limit is 50.5 V vs 42 V full 10S. Keep brake resistors fitted even with regen off.");}
+  if(s.ctrl==="zs"){add("Control","ZS-X11H hall BLDC driver",2,"bench prototyping only","zs");
+    warn("stop","ZS-X11H is open-loop, with no current limit and no watchdog. It does not meet ELE-2 for a delivered chair.","ctrl");}
+  if(s.ctrl==="reflash"){add("Control","Hoverboard mainboard, known STM32F103 variant",1,s.motorsrc==="donated"?"from donated unit":"",s.motorsrc==="donated"?"hubDon":"hbBoard");
+    add("Tools","ST-Link programmer",1,"","stlink");
+    warn("caution","Reflashing conflicts with the ELE-1 no-reflash goal. Treat as a teardown-build alternate.");}
+  if(s.ctrl==="roboclaw"){add("Control","RoboClaw 2x30A",1,"6–34 V, encoder speed control, regen","roboclaw");}
+  if(s.ctrl==="sabertooth"){add("Control","Sabertooth 2x32",1,"","sabertooth");
+    warn("caution","Sabertooth has no built-in encoder speed loop (needs the Kangaroo add-on) and listed lead time was about 8 weeks.");}
+  if(s.ctrl==="wcctrl"){add("Control","Standard wheelchair controller with joystick and brake outputs",1,"verify model","wcCtrl");
+    warn("caution","Standard wheelchair controllers are usually proprietary and often need a dealer programmer. Alternate inputs, parent remotes, and profiles (4.6) only work if the controller exposes an input the supervisor can drive.");
+    if(remote||s.cfgui!=="key") warn("caution","Remote supervision and app settings with a standard controller need an integration path (e.g. joystick emulation). Verify before buying.");}
+  else if(s.ctrl) C.push("Load the versioned controller config file; verify speed cap, current limits, and command timeout (ELE-2a, SAF-5).");
+
+  // Battery
+  if(!wc){
+    const n=s.batt==="hot"?4:2, pk=s.batt==="2ah"?"dcb203":"dcb205";
+    add("Power",s.batt==="2ah"?"DeWalt 20V MAX 2 Ah (DCB203, 36 Wh)":"DeWalt 20V MAX 5 Ah (DCB205, 90 Wh)",n,"genuine only; ≤100 Wh each",pk);
+    add("Power","DeWalt 20V battery adapter with leads",n,"","dwAdapt");
+    add("Power","Series harness, 2 packs to 36 V",n/2,"","dwHarn");
+    add("Power","DeWalt 20V charger",1,"skip if owned","dwChg");
+    add("Power","Per-pack voltage sense divider",1,"midpoint tap, BAT-4","sense");
+    warn("info","Counterfeit DeWalt-style packs are common at low prices. Buy genuine packs from authorized retailers.");
+    if(s.batt==="hot"){add("Power","Ideal-diode controller + MOSFETs (LM74700-class)",2,"BAT-6","idealD");
+      C.push("Hot-swap test: remove one pair while driving; bus must stay up.");}
+  } else {
+    if(s.batt==="b24_6") add("Power","24 V Li-ion pack, 6 Ah (144 Wh), removable, UN38.3 docs",1,"","b24_6");
+    if(s.batt==="b24_10") add("Power","24 V Li-ion pack, 10 Ah (240 Wh), removable, UN38.3 docs",1,"","b24_10");
+    if(s.batt==="b24hot"){add("Power","24 V Li-ion pack, 6 Ah (144 Wh), removable, UN38.3 docs",2,"","b24_6");
+      add("Power","Ideal-diode controller + MOSFETs",2,"BAT-6","idealD");
+      C.push("Hot-swap test: remove one pack while driving; bus must stay up.");}
+    if(s.batt==="sla"){add("Power","12 V SLA/AGM 12 Ah, non-spillable",2,"in series","sla12");
+      warn("caution","Two 12 Ah SLA batteries add roughly 7–8 kg. Heavy for a toddler chair, and not quick-change (BAT-1).");}
+    add("Power",s.batt==="sla"?"24 V SLA charger":"24 V Li-ion charger (29.4 V)",1,"",s.batt==="sla"?"chgSla":"chg24");
+    if(s.batt==="b24_10") warn("info","240 Wh is over 160 Wh. Airline rules allow it as an installed mobility-aid battery, but limit spares (REG-6).");
+    warn("info","Branded chair packs listed at the high end of the range; generic packs cost less but check BMS quality and airline paperwork.");
+  }
+  const needDump=s.regen==="on"||s.batt==="hot"||s.batt==="b24hot"||s.ctrl==="odrive";
+  if(needDump&&s.ctrl!=="wcctrl") add("Power","Bus brake / dump resistor with switch",1,s.ctrl==="odrive"?"included with ODrive S1":"SAF-10",s.ctrl==="odrive"?null:"dump");
+  if(s.regen==="on"&&(s.batt==="hot"||s.batt==="b24hot")) warn("caution","Ideal diodes block regen into the packs. All regen energy goes to the dump resistor; size it accordingly.");
+  if(s.regen==="on") C.push("Regen overvoltage test with fully charged packs (SAF-10).");
+
+  // Passenger
+  if(pax){
+    if(s.batt==="2ah"||s.batt==="b24_6") warn("caution","With a passenger, a small battery will shorten runtime a lot (PAS-8).");
+    C.push("Brake hold, ramp climb, stability, and runtime at max combined mass (PAS-1, PAS-6, PAS-8).");
+    add("Safety","Passenger seat sensor",1,"PAS-2","seatSens");
+    add("Safety","Passenger restraint with latch switch",1,"PAS-3","restraint");}
+  if(s.passenger==="seat"){add("Mechanical","Metal sub-frame for buddy seat",1,"MEC-3","subframe");
+    add("Mechanical","Buddy seat and guards",1,"PAS-4, PAS-7 width","buddy");}
+  if(s.passenger==="trailer"){add("Mechanical","Trailer hitch, load-rated, into metal bracket",1,"","hitch");
+    add("Mechanical","Passenger trailer with seat",1,"","trailer");
+    warn("caution","Trailer pushes the chair on descents. Limit speed with trailer attached, or add trailer braking.");}
+  if(s.passenger==="board"){add("Mechanical","Rear ride-on board with handle",1,"","board");
+    warn("caution","Standing, unrestrained passenger. High fall risk for young children; the caregiver guide must say so (CFG-5).");}
+  if(pax&&s.vent!=="none") warn("caution","Passenger with ventilator mounted is a parent setting, default off. Verify stability for this combination first (PAS-5).");
+
+  // Dual mode
+  if(s.dual==="lift"||s.dual==="pod"){
+    add("Mechanical","Lift lever linkage with over-center lock",1,"DM-3","lever");
+    add("Safety","Deploy/lock interlock switch",2,"DM-2","interlock");
+    C.push("Stability in manual, powered, and transition positions (DM-8). Lever force with max occupant (DM-5).");}
+  if(s.dual==="pod") add("Mechanical","Power pod frame with quick-release mounts",1,"","pod");
+  if(s.dual==="friction"){add("Mechanical","Spring-loaded friction drive arm",2,"","fricArm");
+    add("Safety","Push-rim guards",2,"DM-9","rimGuard");
+    add("Safety","Drive engaged sensor",2,"DM-2","interlock");
+    warn("caution","Friction drive spins the push rims under power. Rim guards are required (DM-9). Check slip on wet or TPU tires.");
+    if(s.drive==="wcbrushed") warn("caution","Friction drive with a gearmotor needs a custom roller on the keyed shaft. Not a standard configuration.");}
+  if(s.dual==="poweronly") warn("stop","Power-only build does not meet the dual-mode requirement (1.5a, MEC-7).","dual");
+  if(wc&&s.dual!=="poweronly") C.push("Manual mode: motor brakes released or drive wheels lifted, with no drag on the printed wheels (DM-6).");
+
+  // Brakes
+  const br=s.brake, wheelSets=(s.dual==="lift"||s.dual==="pod")?2:1;
+  if(br.length===0) warn("stop","No parking brake selected. SAF-1 requires the chair to hold on a 1:12 slope with power off.","brake");
+  if(br.includes("integ")){
+    C.push("Motor EM brakes engage on power loss and e-stop; freewheel/manual release returns safely (SAF-2b, SAF-2c).");
+    if(s.ctrl==="vesc"||s.ctrl==="odrive"||s.ctrl==="zs") add("Brake","Brake coil driver output (hit-and-hold)",1,"controller has no brake output","hitHold");
+    if(wheelSets>1&&!br.includes("manual")) warn("caution","Motor brakes hold only in power mode. Add wheel locks for the printed wheels in manual mode (DM-7).");}
+  if(br.includes("manual")){add("Brake","Wheel lock, lever-on-tire",2*(br.includes("integ")?1:wheelSets),wheelSets>1&&!br.includes("integ")?"printed wheels and drive wheels":"","wlock");
+    if(br.length===1) warn("info","Manual locks only: not automatic. The chair holds only when a caregiver applies them.");}
+  if(br.includes("pin")){add("Brake","Push-pull solenoid, spring-engaged",2,`${bus} V`,"sol");
+    add("Brake","Indexed lock disc for wheel",2,"","idxDisc");
+    warn("info","Solenoid pin lock engages at zero speed only. The supervisor must enforce this (SAF-2).");}
+  if(br.includes("em")){add("Brake","Spring-applied, solenoid-released friction brake",2,"","emBrake");
+    add("Brake","Rotor/drum adapter",2,"","rotorAd");}
+  if(br.includes("cable")){add("Brake","Bicycle disc caliper + rotor",2,"","caliper");
+    add("Brake","Rotor adapter",2,"","rotorAd");
+    add("Brake","Spring return + release actuator",2,"","springAct");}
+  if(br.some(b=>b==="pin"||b==="em"||b==="cable")){add("Brake","Hit-and-hold solenoid/actuator driver",1,"SAF-2a","hitHold");
+    add("Brake","Manual brake release",1,"SAF-2c","manRel");
+    C.push("Add-on brakes engage on power loss and on e-stop; manual release returns safely (SAF-2b, SAF-2c).");}
+  if(br.length) C.push("Brake hold on 1:12 slope, power off, max mass, in every drive mode (SAF-1, DM-7).");
+
+  // Assistive driving (4.7)
+  const ai=s.aiplat!=="none", af=s.assist;
+  if(s.aiplat==="ventuno"){add("Assist","Arduino VENTUNO Q",1,"Dragonwing IQ8 + STM32H5, 3× MIPI-CSI","ventuno");}
+  if(s.aiplat==="unoq"){add("Assist","Arduino UNO Q",1,"verify vision capability","unoq");}
+  if(s.aiplat==="other"){add("Assist","Sponsor assist computer",1,"must meet ASD-7 interface","otherAI");}
+  if(ai){add("Assist",`Regulated DC-DC for assist computer from ${bus} V bus`,1,"ASD-14","dcdc12");
+    add("Assist","Assist override switch (matched to driver input)",1,"ASD-3","ovr");
+    add("Assist","Warning annunciator (tones, LEDs, haptic)",1,"ASD-8","annunc");
+    C.push("Pull assist computer power while driving: limits ramp off, no abrupt stop, caregiver alerted (ASD-5).");
+    C.push("Driver override works with every configured input method (ASD-3).");
+    warn("info","Assist is not part of the Safety Floor. The caregiver guide must state it cannot detect all hazards and may false-alarm (ASD-11).");
+    if(s.batt==="2ah"||s.batt==="b24_6") warn("caution","Assist computer draw on a small battery will shorten runtime. Measure it and add it to the budget (ASD-14).");}
+  if(af.includes("street")||(ai&&(af.includes("collide")||af.includes("drop")))) add("Assist","Camera module (MIPI-CSI)",af.includes("street")?2:1,"on-device processing only (ASD-9)","cam");
+  if(af.includes("collide")) add("Assist","ToF/ultrasonic ranging sensor (front, rear, sides)",4,"","tof");
+  if(af.includes("drop")) add("Assist","Downward ToF cliff sensor",s.passenger==="trailer"?4:2,"front corners","cliff");
+  if(af.includes("tip")) add("Assist","IMU (pitch/roll/rate)",1,"","imu");
+  if(af.includes("power")) add("Assist","Bus current/voltage monitor",1,"","pwrMon");
+  if(af.length&&!ai&&!af.every(x=>x==="tip"||x==="power")) warn("info","Without an assist computer, collision and drop-off use ranging sensors on the supervisor only (no vision).");
+  if(af.includes("street")&&s.assistlvl!=="warn") warn("caution","Street/vehicle awareness should stay Warn only. Stopping unexpectedly in a roadway can be more dangerous than continuing.");
+  if(af.length&&s.assistlvl==="stop") warn("caution","Stop-level assist: false positives frustrate drivers and lead to features being turned off. Tune before delivery, and publish test results (ASD-12).");
+  af.forEach(x=>{const n={collide:"collision",drop:"drop-off",street:"street/vehicle",tip:"tip/slope",power:"power"}[x];
+    C.push(`Run the ${n} test protocol before enabling above Warn (ASD-12).`)});
+  if(af.includes("tip")) C.push("Tip test: IMU beyond recovery angle disables drive and alerts caregiver (ASD-13, proposed).");
+
+  // Vent
+  if(s.vent!=="none"){add("Mechanical","Ventilator mount/tray with tubing guard",1,"VNT-8","ventMount");
+    C.push("Stability with ventilator mounted (VNT-9). EMC check: vent operation near motor controller (VNT-7).");}
+  if(s.vent==="fed"){
+    add("Power","Isolated DC-DC converter within the vent's labeled DC input range",1,"VNT-3","dcdc");
+    add("Power","Ventilator manufacturer's DC cable/adapter",1,"VNT-5; price from vent maker","ventCable");
+    add("Power","Separate vent-feed fuse and switch",1,"VNT-2","ventFuse");
+    warn("caution","Chair-fed ventilator: FDA accessory status is unresolved (REG-2). Resolve before publishing or delivering this configuration.");
+    if(s.batt==="2ah"||s.batt==="b24_6") warn("caution","Chair-fed vent on a small battery leaves little for driving. Size battery with vent load (VNT-10).");
+    if(wc) warn("info","A 24 V bus matches some ventilators' 24 V wheelchair power inputs, but still use an isolated converter (VNT-3).");
+    C.push("E-stop, main switch, and traction faults do not interrupt vent power. Traction cutoff happens before vent cutoff (VNT-2, VNT-4).");}
+
+  // Inputs
+  if(s.input.length===0) warn("stop","Select at least one driver input method.","input");
+  if(has("input","joy")&&s.ctrl!=="wcctrl") add("Input","Proportional joystick, adjustable mount",1,"INP-4","joy");
+  if(has("input","sw")||has("input","scan")){add("Input","Adapted switches",has("input","sw")?4:1,"","adSwitch"); add("Input","3.5 mm switch jacks",has("input","sw")?4:1,"","jack");}
+  if(has("input","scan")) add("Input","Scan indicator display or LEDs",1,"","scanDisp");
+  if(has("input","snp")) add("Input","R.O.A.R. Sip-N-Puff module",1,"","snp");
+  if(has("input","head")) add("Input","Head array (commercial or custom)",1,"","head");
+  C.push("Unplug or fault each input device while driving: chair stops (INP-3).");
+
+  // Supervision + link
+  if(s.sup.length===0) warn("info","No supervision option selected. Equivalent to Independent.");
+  if(remote&&s.link==="none") warn("stop","The selected supervision options need an attendant link. Choose BLE or RC.","link");
+  if(s.link==="ble") add("Control","Parent remote (BLE) with e-stop button",1,"","bleRemote");
+  if(s.link==="rc") add("Control","2.4 GHz RC transmitter + receiver with failsafe",1,"","rc");
+  if(s.link!=="none"&&remote) C.push("Link-loss test: turn the remote off while driving; chair stops within the set time (ATT-3).");
+  if(has("sup","prox")&&s.link!=="ble") warn("caution","Proximity limit needs BLE ranging. RC links give no distance.");
+  if(has("sup","prox")) warn("info","Radio ranging is imprecise. Document its limits for parents (CFG-5).");
+  if(has("sup","tether")){add("Safety","Magnetic tether kill switch with lanyard",1,"","tether"); C.push("Pull tether while driving: chair stops.");}
+  if(has("sup","enable")) add("Input","Driver enable switch (adapted switch)",1,"","adSwitch");
+  if(has("sup","indep")&&s.sup.length>1) warn("info","Independent is selected with other options. Profiles can hold different combinations (CFG-2).");
+
+  // Config UI
+  if(s.cfgui!=="app"){add("Control","Keyswitch for settings lock",1,"CFG-3","keysw"); add("Control","Small status display",1,"CFG-8","disp");}
+  if(s.cfgui!=="key"&&s.link!=="ble") warn("caution","Phone app needs BLE on the chair. Use a radio-equipped supervisor board.");
+  if(s.mass==="25"&&s.wheel==="10"&&s.drive==="hub36") warn("info","10 in hubs at 25 kg plus chair: check ramp thermal margin (DRV-4).");
+
+  render(bom,W,C,bad);
+}
+
+function render(bom,W,C,bad){
+  const order={stop:0,caution:1,info:2}, lab={stop:"Blocks build:",caution:"Caution:",info:"Note:"};
+  W.sort((a,b)=>order[a.lvl]-order[b.lvl]);
+  document.getElementById("warns").innerHTML=W.map(w=>`<div class="warn ${w.lvl}"><b>${lab[w.lvl]}</b><span>${w.txt}</span></div>`).join("");
+  let lo=0,hi=0,priced=0,listedLo=0;
+  bom.forEach(b=>{const p=b.pk?P[b.pk]:null; b.price=p; if(p){lo+=p[0]*b.qty; hi+=p[1]*b.qty; priced++; if(p[2]==="listed") listedLo+=p[0]*b.qty}});
+  const cats=[...new Set(bom.map(b=>b.cat))];
+  document.getElementById("bom").innerHTML=cats.map(c=>`<tr class="cat"><td colspan="3">${c}</td></tr>`+
+    bom.filter(b=>b.cat===c).map(b=>{const p=b.price;
+      const pr=p?`${p[1]===0?"$0":money(p[0]*b.qty)+(p[1]!==p[0]?"–"+money(p[1]*b.qty):"")}`+`<span class="n">${p[2]==="listed"?"listed":p[2]==="donated"?"donated":"est."}</span>`:`<span class="n">TBD</span>`;
+      return `<tr><td>${b.item}${b.note?`<span class="n">${b.note}</span>`:""}</td><td class="q">${b.qty}</td><td class="pr">${pr}</td></tr>`}).join("")).join("");
+  document.getElementById("total").innerHTML=`<b>${money(lo)}–${money(hi)}</b> for ${priced} of ${bom.length} priced lines. Excludes shipping, tax, filament, and TBD items.`;
+  document.getElementById("checks").innerHTML=C.map(c=>`<li>${c}</li>`).join("");
+  const nS=W.filter(w=>w.lvl==="stop").length, nC=W.filter(w=>w.lvl==="caution").length;
+  document.getElementById("sumTitle").textContent=nS?"Build sheet: not ready":"Build sheet: ready to review";
+  document.getElementById("sumLine").textContent=`${money(lo)}–${money(hi)} parts, ${nS} blocking, ${nC} caution`;
+  DECISIONS.forEach(d=>document.getElementById("fs-"+d.id).classList.toggle("bad",bad.has(d.id)));
+  window._last={bom,W,C,lo,hi,priced};
+}
+
+function exportMd(){
+  const {bom,W,C,lo,hi,priced}=window._last;
+  let t="# MakeGood Power Chair build sheet\n\n## Configuration\n";
+  DECISIONS.forEach(d=>{const v=state[d.id];const name=x=>(d.opts.find(o=>o[0]===x)||[x,x])[1];
+    t+=`- ${d.label}: ${Array.isArray(v)?(v.map(name).join(", ")||"none"):name(v)}\n`});
+  if(W.length){t+="\n## Warnings\n";W.forEach(w=>t+=`- [${w.lvl}] ${w.txt}\n`)}
+  t+="\n## Parts\n| Category | Item | Qty | Est. cost (USD) | Price basis | Note |\n|---|---|---|---|---|---|\n";
+  bom.forEach(b=>{const p=b.price;t+=`| ${b.cat} | ${b.item} | ${b.qty} | ${p?`${Math.round(p[0]*b.qty)}–${Math.round(p[1]*b.qty)}`:"TBD"} | ${p?p[2]:""} | ${b.note||""} |\n`});
+  t+=`\n**Parts total: ${money(lo)}–${money(hi)}** (${priced} of ${bom.length} lines priced; excludes shipping, tax, filament, TBD items). Prices as of Sept 2026; "listed" = seen in a US retail listing, "est." = estimate to verify.\n`;
+  t+="\n## Verification\n";C.forEach(c=>t+=`- [ ] ${c}\n`);
+  return t;
+}
+async function copy(text,msg){
+  const st=document.getElementById("status"), ta=document.getElementById("out");
+  try{await navigator.clipboard.writeText(text); st.textContent=msg; ta.style.display="none"}
+  catch(e){ta.value=text; ta.style.display="block"; ta.select(); st.textContent="Clipboard blocked. Text is selected below; copy it manually."}
+}
+document.getElementById("cpMd").onclick=()=>copy(exportMd(),"Parts list copied as Markdown.");
+document.getElementById("cpJson").onclick=()=>copy(JSON.stringify({schema:"mgpc-config-v2",rules:"0.4",config:state},null,2),"Config copied as JSON.");
+document.getElementById("reset").onclick=()=>{state=normalize(defaults()); try{localStorage.removeItem(KEY)}catch(e){} renderForm(); compute();
+  document.getElementById("status").textContent="Reset to defaults."};
+
+renderForm(); compute();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# CAD scratch / backups
+*.bak
+*.f3d.bak
+*~
+*.FCBak
+*.FCStd1
+
+# Slicer output
+*.gcode
+*.3mf.bak
+
+# Python (configurator tooling / firmware helpers)
+__pycache__/
+*.pyc
+.venv/
+
+# CircuitPython board mounts accidentally added
+CIRCUITPY/
